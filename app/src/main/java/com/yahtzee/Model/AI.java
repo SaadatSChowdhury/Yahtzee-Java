@@ -194,6 +194,25 @@ public class AI {
             largestIntersection = getOnlyMaximalKind(largestIntersection);
         }
 
+        List<Integer> finalRoll = combineRolls(keptDice, largestIntersection);
+        if (FULL_HOUSE.equals(targetCategory)) {
+            for (int diceValue = 1; diceValue <= 6; diceValue++) {
+                int count = 0;
+
+                for (int dice : finalRoll) {
+                    if (dice == diceValue) {
+                        count++;
+                    }
+                }
+
+                // if count is 1 and dice in intersection, remove it
+                if (count == 1 && largestIntersection.contains(diceValue)) {
+                    largestIntersection.remove(Integer.valueOf(diceValue));
+                }
+            }
+        }
+
+
         return new CategoryKeepDice(targetCategory, largestIntersection);
     }
 

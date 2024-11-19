@@ -16,9 +16,6 @@ public class LogActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
 
-        // find activity layout
-//        View layout = findViewById(R.layout.activity_log);
-
         setContentView(R.layout.activity_log);
 
         TextView logTextView = findViewById(R.id.logText);
@@ -26,6 +23,5 @@ public class LogActivity extends AppCompatActivity {
 
         Button backButton = findViewById(R.id.backButton);
         backButton.setOnClickListener(v -> finish());
-
     }
 }

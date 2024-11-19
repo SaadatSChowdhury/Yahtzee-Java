@@ -242,8 +242,6 @@ public class GameActivity extends AppCompatActivity {
             initGameDisplay();
         });
         rollAllButton.setEnabled(!diceRoll.isAllDiceKept());
-        // Hide the roll all button
-//        rollAllButton.setVisibility(View.GONE);
     }
 
     private void initStandButton() {

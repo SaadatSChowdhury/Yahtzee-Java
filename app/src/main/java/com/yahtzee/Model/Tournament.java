@@ -8,9 +8,14 @@ import java.util.List;
 import java.util.Queue;
 import java.util.stream.Collectors;
 
-public class Game {
-    private static Game instance;
+/**
+ * Represents the main tournament logic for a Yahtzee game.
+ * Handles player turns, rounds, dice rolls, and scorecard updates.
+ */
+public class Tournament {
+    private static Tournament instance;
 
+    // List of players participating in the tournament
     private final List<Player> players = new ArrayList<>(List.of(
             new Player("Human", false),
             new Player("Computer", true)
@@ -18,32 +23,59 @@ public class Game {
     private ScoreCard scoreCard = new ScoreCard();
     private final DiceRoll diceRoll = new DiceRoll();
 
+    // Current round number
     private int currentRound;
+
+    // Current turn number within a round
     private int currentTurn;
+
+    // Player currently taking a turn
     private Player currentPlayer;
+
+    // Player taking the next turn
     private Player nextPlayer;
+
+    // AI Class-generated help for the current player
     private Help currentHelp;
 
+    // Queue for determining the order of players
     private Queue<Player> turnOrder;
 
-    private Game() {
+    /**
+     * Private constructor for the singleton pattern.
+     * Initializes a new tournament with default settings.
+     */
+    private Tournament() {
         currentRound = 1;
         currentTurn = 1;
         ScoreCard scoreCard = new ScoreCard();
     }
 
-    public static Game getInstance() {
+    /**
+     * Returns the singleton instance of the Tournament class.
+     *
+     * @return the Tournament instance
+     */
+    public static Tournament getInstance() {
         if (instance == null) {
-            instance = new Game();
+            instance = new Tournament();
         }
         return instance;
     }
 
+    /**
+     * Starts a new game by creating a new instance of the Tournament class.
+     */
     public static void startNewGame() {
-        instance = new Game();
+        instance = new Tournament();
         Logger.log("New game started");
     }
 
+    /**
+     * Loads a game from a serialized string.
+     *
+     * @param gameString the serialized game string
+     */
     public static void setFromString(String gameString) {
         List<String> lines = gameString.lines().collect(Collectors.toList());
 
@@ -69,7 +101,7 @@ public class Game {
         Player computer = new Player("Computer", true);
         ScoreCard scoreCard = ScoreCard.fromString(scorecardSerial, human, computer);
 
-        instance = new Game();
+        instance = new Tournament();
         instance.setScoreCard(scoreCard);
         instance.setCurrentRound(roundNumber);
 
@@ -87,7 +119,7 @@ public class Game {
         return serial.toString();
     }
 
-
+    // Getters and setters for fields
     public DiceRoll getDiceRoll() {
         return diceRoll;
     }
@@ -132,6 +164,10 @@ public class Game {
     }
 
 
+    /**
+     * Handles a player's decision to stand, ending their turn.
+     * Logs dice rolls and calculates available categories.
+     */
     public void stand() {
         Logger.log(currentPlayer.getName() + " rolls " + diceRoll.getRolledDiceValues());
         Logger.log(currentPlayer.getName() + " keeps dice: " + diceRoll.getRolledDiceValues());
@@ -150,6 +186,10 @@ public class Game {
         Logger.log("");
     }
 
+    /**
+     * Handles a player's decision to reroll, keeping selected dice.
+     * Logs dice rolls and calculates available categories.
+     */
     public void reRoll() {
         if (!diceRoll.isAllDiceRolled()) {
             Logger.log("Not all dice are rolled. Not rerolling");
@@ -176,6 +216,9 @@ public class Game {
 
     }
 
+    /**
+     * Keeps all rolled dice for the current turn.
+     */
     private void keepAllDice() {
         diceRoll.keepAll();
     }
@@ -184,6 +227,11 @@ public class Game {
         return currentTurn;
     }
 
+    /**
+     * Handles category selection by the player.
+     *
+     * @param category the category to select
+     */
     public void selectCategory(Category category) {
         if (category != null && scoreCard.getAvailableCategories().contains(category)) {
             List<Integer> diceValues = diceRoll.getKeptDiceValues();
@@ -197,6 +245,9 @@ public class Game {
         checkOver();
     }
 
+    /**
+     * Finishes the current player's turn and prepares the game for the next player or round.
+     */
     private void finishTurn() {
         currentTurn = 1;
         diceRoll.reset();
@@ -210,6 +261,9 @@ public class Game {
         resetHelp();
     }
 
+    /**
+     * Determines the order of players for the next round based on their scores.
+     */
     private void determinePlayerOrder() {
         // Get a sorted list of players by total score
         Player p1 = players.get(0);
@@ -237,10 +291,20 @@ public class Game {
         Logger.log("");
     }
 
+    /**
+     * Checks if the game is over.
+     *
+     * @return true if the game is over, false otherwise
+     */
     public boolean isOver() {
         return scoreCard.isComplete();
     }
 
+    /**
+     * Returns the result of the game as a formatted string.
+     *
+     * @return the result of the game
+     */
     public String getResultText() {
         if (!isOver()) {
             return "Game is not over";
@@ -272,6 +336,9 @@ public class Game {
 
     }
 
+    /**
+     * Resets the AI Class help for the current player.
+     */
     public void resetHelp() {
         currentHelp = null;
 
@@ -280,6 +347,9 @@ public class Game {
         }
     }
 
+    /**
+     * Generates AI Class help for the current player.
+     */
     public void getHelp() {
         resetHelp();
         if (!diceRoll.isAllDiceRolled()) {
@@ -300,6 +370,9 @@ public class Game {
         }
     }
 
+    /**
+     * Handles the computer player's turn logic.
+     */
     public void confirmComputerRoll() {
         if (!currentPlayer.isComputer()) {
             return;
@@ -328,6 +401,9 @@ public class Game {
 
     }
 
+    /**
+     * Checks if the game is over and logs the result if true.
+     */
     public void checkOver() {
         if (isOver()) {
             Logger.log("Game over");

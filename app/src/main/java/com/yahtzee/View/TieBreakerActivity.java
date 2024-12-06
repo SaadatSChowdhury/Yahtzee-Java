@@ -9,13 +9,16 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.yahtzee.Model.Game;
+import com.yahtzee.Model.Tournament;
 import com.yahtzee.Model.Player;
 import com.yahtzee.R;
 
 import java.util.Random;
 
-
+/**
+ * This activity handles the tie-breaking process when two players have the same score at the end of a Yahtzee game.
+ * Players roll a die, and the player with the higher roll goes first in the next round.
+ */
 public class TieBreakerActivity extends AppCompatActivity {
 
     private TextView computerDieValue;
@@ -117,15 +120,15 @@ public class TieBreakerActivity extends AppCompatActivity {
         // Continue Button Logic
         continueButton.setOnClickListener(v -> {
 
-            Game game = Game.getInstance();
+            Tournament tournament = Tournament.getInstance();
             Player human = new Player("Human", false);
             Player computer = new Player("Computer", true);
 
 
             if (computerDie > humanDie) {
-                game.setPlayerOrder(computer, human);
+                tournament.setPlayerOrder(computer, human);
             } else if (humanDie > computerDie) {
-                game.setPlayerOrder(human, computer);
+                tournament.setPlayerOrder(human, computer);
             } else {
                 Toast.makeText(TieBreakerActivity.this, "It's a tie! Roll again.", Toast.LENGTH_SHORT).show();
                 resultText.setText("It's a tie! Roll again.");
@@ -138,12 +141,22 @@ public class TieBreakerActivity extends AppCompatActivity {
         });
     }
 
-    // Roll Dice Method
+    /**
+     * Simulates rolling a die.
+     *
+     * @return A random integer between 1 and 6 (inclusive).
+     */
     private int rollDice() {
         return random.nextInt(6) + 1; // Generates a number between 1 and 6
     }
 
-    // Adjust the die value up or down; it should cycle from 1 to 6
+    /**
+     * Adjusts the die value up or down, cycling from 1 to 6.
+     *
+     * @param current    The current die value.
+     * @param isIncrement True to increment, false to decrement.
+     * @return The adjusted die value.
+     */
     private int adjustDieValue(int current, boolean isIncrement) {
         if (isIncrement) {
             return current < 6 ? current + 1 : 1;
@@ -152,7 +165,12 @@ public class TieBreakerActivity extends AppCompatActivity {
         }
     }
 
-    // Update the displayed dice values
+    /**
+     * Updates the displayed dice values in the UI.
+     *
+     * @param computerRoll The computer's die value.
+     * @param humanRoll    The human's die value.
+     */
     private void updateDiceValues(int computerRoll, int humanRoll) {
         if (computerRoll == 0 || humanRoll == 0) {
             return;
@@ -161,7 +179,12 @@ public class TieBreakerActivity extends AppCompatActivity {
         humanDieValue.setText(String.valueOf(humanRoll));
     }
 
-    // Determine and display the winner
+    /**
+     * Determines and displays the winner based on the die rolls.
+     *
+     * @param computerRoll The computer's die value.
+     * @param humanRoll    The human's die value.
+     */
     private void determineWinner(int computerRoll, int humanRoll) {
         if (computerRoll > humanRoll) {
             resultText.setText("Computer will be playing first!");
@@ -172,6 +195,9 @@ public class TieBreakerActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Hides the roll buttons and shows the continue button.
+     */
     private void postRollActions() {
 
         if (computerDie == humanDie) {

@@ -18,7 +18,7 @@ import androidx.appcompat.widget.SwitchCompat;
 import com.yahtzee.Model.Category;
 import com.yahtzee.Model.DiceRoll;
 import com.yahtzee.Model.Die;
-import com.yahtzee.Model.Game;
+import com.yahtzee.Model.Tournament;
 import com.yahtzee.Model.CardEntry;
 import com.yahtzee.Model.Player;
 
@@ -35,12 +35,14 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The main activity for the Yahtzee game.
+ * This activity handles the game display, user interactions, and game logic.
+ */
 public class GameActivity extends AppCompatActivity {
 
     TableLayout scoreCardTable;
-
-
-    Game game;
+    Tournament tournament;
     DiceRoll diceRoll;
 
     private static final String TAG = "GameActivity";
@@ -51,14 +53,20 @@ public class GameActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_game);
 
-        game = Game.getInstance();
-        diceRoll = game.getDiceRoll();
+        tournament = Tournament.getInstance();
+        diceRoll = tournament.getDiceRoll();
 
         initGameDisplay();
     }
 
+    /**
+     * Initializes the game display.
+     * Checks if the tournament is over and starts the ResultActivity if it is.
+     * Otherwise, initializes the round display, current player display, scorecard,
+     * turn display, help button, computer roll confirm button, log button and save game button.
+     */
     private void initGameDisplay() {
-        if (game.isOver()) {
+        if (tournament.isOver()) {
             Intent intent = new Intent(this, ResultActivity.class);
             startActivity(intent);
         }
@@ -72,39 +80,53 @@ public class GameActivity extends AppCompatActivity {
         initSaveGameButton();
     }
 
+    /**
+     * Initializes the round display by setting the round number text.
+     */
     private void initRoundDisplay() {
         TextView roundDisplay = findViewById(R.id.roundNumber);
-        roundDisplay.setText(game.getCurrentRound() + "");
+        roundDisplay.setText(tournament.getCurrentRound() + "");
     }
 
+    /**
+     * Initializes the current player display by setting the current player's name.
+     * If the current player is null, starts the TieBreakerActivity.
+     */
     private void initCurrentPlayerDisplay() {
         TextView currentPlayerDisplay = findViewById(R.id.playerName);
-        Player currentPlayer = game.getCurrentPlayer();
+        Player currentPlayer = tournament.getCurrentPlayer();
         if (currentPlayer == null) {
             // Start the TieBreakerActivity
             Intent intent = new Intent(this, TieBreakerActivity.class);
             startActivity(intent);
         } else {
-            currentPlayerDisplay.setText(game.getCurrentPlayer().getName());
+            currentPlayerDisplay.setText(tournament.getCurrentPlayer().getName());
         }
     }
 
+    /**
+     * Initializes the scorecard display.
+     * Removes all existing rows except the header.
+     * Adds a new row for each category in the scorecard.
+     * Sets the background color of available categories to green.
+     * Adds an onclick listener to valid categories when all dice are kept.
+     * Displays the total score for each player.
+     */
     private void initScoreCard() {
         scoreCardTable = findViewById(R.id.scoreCardTable);
-        // Remove all views except the header
         scoreCardTable.removeViews(1, scoreCardTable.getChildCount() - 1);
 
 
-        List<CardEntry> entries = game.getScoreCard().getEntries();
+        List<CardEntry> entries = tournament.getScoreCard().getEntries();
 
         List<Integer> potentialKeptDiceValues = new ArrayList<>(diceRoll.getKeptDiceValues());
         potentialKeptDiceValues.addAll(diceRoll.getMarkedDiceValues());
 
 
-        List<Category> potentialCategories = game.getScoreCard().getPotentialCategories(potentialKeptDiceValues);
-        List<Category> validCategories = game.getScoreCard().getValidCategories(diceRoll.getKeptDiceValues());
+        List<Category> potentialCategories = tournament.getScoreCard().getPotentialCategories(potentialKeptDiceValues);
+        List<Category> validCategories = tournament.getScoreCard().getValidCategories(diceRoll.getKeptDiceValues());
 
-        for (CardEntry entry : game.getScoreCard().getEntries()) {
+        for (CardEntry entry : tournament.getScoreCard().getEntries()) {
             TableRow row = new TableRow(this);
             TextView category = new TextView(this);
             category.setText(entry.getCategory().toString());
@@ -130,7 +152,7 @@ public class GameActivity extends AppCompatActivity {
             // If all dice are kept, add onclick listener to the row
             if (diceRoll.isAllDiceKept() && validCategories.contains(entry.getCategory())) {
                 row.setOnClickListener(v -> {
-                    game.selectCategory(entry.getCategory());
+                    tournament.selectCategory(entry.getCategory());
                     initGameDisplay();
                 });
 
@@ -145,20 +167,32 @@ public class GameActivity extends AppCompatActivity {
 
         TextView totalScore = findViewById(R.id.totalScore);
         StringBuilder totalScoreText = new StringBuilder();
-        for (Player player : game.getPlayers()) {
-            totalScoreText.append(player.getName()).append("'s Total Score: ").append(game.getScoreCard().getTotalScore(player)).append("\n");
+        for (Player player : tournament.getPlayers()) {
+            totalScoreText.append(player.getName()).append("'s Total Score: ").append(tournament.getScoreCard().getTotalScore(player)).append("\n");
         }
         totalScore.setText(totalScoreText.toString());
     }
 
+    /**
+     * Initializes the turn display by setting the turn number text.
+     * Also initializes the dice roll, stand button, and reroll button.
+     */
     private void initTurnDisplay() {
         TextView turnNumber = findViewById(R.id.turnNumber);
-        turnNumber.setText(game.getTurnNumber() + "");
+        turnNumber.setText(tournament.getTurnNumber() + "");
         initDiceRoll();
         initStandButton();
         initRerollButton();
     }
 
+    /**
+     * Initializes the dice roll display.
+     * Removes all existing dice views.
+     * Adds a new view for each die in the dice roll.
+     * Sets the die value text and kept state.
+     * Adds an onclick listener to each die to toggle its kept state.
+     * Adds an onclick listener to the roll all button to roll all dice.
+     */
     private void initDiceRoll() {
         LinearLayout diceContainer = findViewById(R.id.diceContainer);
         diceContainer.removeAllViews();
@@ -184,7 +218,7 @@ public class GameActivity extends AppCompatActivity {
 
             dieKept.setChecked(die.isMarked());
             boolean currentPlayerIsHuman = isHumanPlayer();
-            if (!die.isKept() && game.getTurnNumber() < 3 && currentPlayerIsHuman) {
+            if (!die.isKept() && tournament.getTurnNumber() < 3 && currentPlayerIsHuman) {
                 dieKept.setVisibility(View.VISIBLE);
                 dieKept.setOnCheckedChangeListener((buttonView, isChecked) -> {
                     die.setMarked(isChecked);
@@ -244,6 +278,12 @@ public class GameActivity extends AppCompatActivity {
         rollAllButton.setEnabled(!diceRoll.isAllDiceKept());
     }
 
+    /**
+     * Initializes the stand button.
+     * Sets the button text to "Finish Round" if it is the last turn.
+     * Adds an onclick listener to the button to stand.
+     * Disables the button if it is not the player's turn or if all dice are kept.
+     */
     private void initStandButton() {
         Button standButton = findViewById(R.id.standButton);
 
@@ -254,19 +294,24 @@ public class GameActivity extends AppCompatActivity {
         }
 
         standButton.setOnClickListener(v -> {
-            game.stand();
+            tournament.stand();
             clearHelpText();
             initGameDisplay();
         });
 
         standButton.setEnabled(diceRoll.isAllDiceRolled() && !diceRoll.isAllDiceKept());
 
-        if (game.getTurnNumber() == 3) {
+        if (tournament.getTurnNumber() == 3) {
             standButton.setText("Finish Round");
         }
 
     }
 
+    /**
+     * Initializes the reroll button.
+     * Adds an onclick listener to the button to reroll the selected dice.
+     * Disables the button if it is not the player's turn or if no dice are selected.
+     */
     private void initRerollButton() {
         Button reRollButton = findViewById(R.id.reRollButton);
 
@@ -277,12 +322,12 @@ public class GameActivity extends AppCompatActivity {
         }
 
         reRollButton.setOnClickListener(v -> {
-            game.reRoll();
+            tournament.reRoll();
             clearHelpText();
             initGameDisplay();
         });
 
-        if (diceRoll.isAllDiceRolled() && game.getTurnNumber() < 3 && !diceRoll.isAllDiceKept()) {
+        if (diceRoll.isAllDiceRolled() && tournament.getTurnNumber() < 3 && !diceRoll.isAllDiceKept()) {
             reRollButton.setEnabled(true);
         } else {
             reRollButton.setEnabled(false);
@@ -290,6 +335,11 @@ public class GameActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Initializes the help button.
+     * Adds an onclick listener to the button to get help.
+     * Disables the button if it is not the player's turn or if all dice are kept.
+     */
     private void initHelpButton() {
         Button helpButton = findViewById(R.id.getHelpButton);
         TextView helpText = findViewById(R.id.helpText);
@@ -308,12 +358,12 @@ public class GameActivity extends AppCompatActivity {
         helpButton.setOnClickListener(v -> {
             if (diceRoll.isAllDiceKept()) {
                 clearHelpText();
-                game.getHelp();
-                String bestCategory = game.getCurrentHelp().getTargetCategory().toString();
+                tournament.getHelp();
+                String bestCategory = tournament.getCurrentHelp().getTargetCategory().toString();
                 helpText.setText("Best Category: " + bestCategory);
             } else {
-                game.getHelp();
-                helpText.setText(game.getCurrentHelp().toString());
+                tournament.getHelp();
+                helpText.setText(tournament.getCurrentHelp().toString());
             }
             initGameDisplay();
         });
@@ -321,12 +371,17 @@ public class GameActivity extends AppCompatActivity {
         helpButton.setEnabled(diceRoll.isAllDiceRolled() && !isComputerPlayer());
 
 
-        if (game.getTurnNumber() == 3 && !diceRoll.isAllDiceKept()) {
+        if (tournament.getTurnNumber() == 3 && !diceRoll.isAllDiceKept()) {
             helpButton.setEnabled(false);
         }
 
     }
 
+    /**
+     * Initializes the computer roll confirm button.
+     * Adds an onclick listener to the button to confirm the computer's roll.
+     * Disables the button if it is not the computer's turn or if all dice are kept.
+     */
     private void initComputerRollConfirmButton() {
         Button computerRollConfirmButton = findViewById(R.id.confirmComputerRollButton);
 
@@ -337,12 +392,16 @@ public class GameActivity extends AppCompatActivity {
         }
 
         computerRollConfirmButton.setOnClickListener(v -> {
-            game.confirmComputerRoll();
+            tournament.confirmComputerRoll();
             initGameDisplay();
         });
         computerRollConfirmButton.setEnabled(isComputerPlayer() && diceRoll.isAllDiceRolled() && !diceRoll.isAllDiceKept());
     }
 
+    /**
+     * Initializes the log button.
+     * Adds an onclick listener to the button to open the LogActivity.
+     */
     private void initLogButton() {
         Button logButton = findViewById(R.id.logButton);
         logButton.setOnClickListener(v -> {
@@ -351,17 +410,26 @@ public class GameActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Initializes the save game button.
+     * Adds an onclick listener to the button to open the file picker.
+     */
     private void initSaveGameButton() {
         Button saveGameButton = findViewById(R.id.saveGameButton);
         saveGameButton.setOnClickListener(view -> openFilePicker());
     }
 
+    /**
+     * Clears the help text.
+     */
     private void clearHelpText() {
         TextView helpText = findViewById(R.id.helpText);
         helpText.setText("");
     }
 
-    // Open file picker to let the user choose the location and file name.
+    /**
+     * Opens the file picker to allow the user to choose a location and filename to save the game.
+     */
     private void openFilePicker() {
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.setType("text/plain"); // The type of file we want to create is plain text
@@ -369,7 +437,15 @@ public class GameActivity extends AppCompatActivity {
         startActivityForResult(intent, 1001);
     }
 
-    // Activity result callback to handle the file picker result
+    /**
+     * Handles the result of the file picker activity.
+     * If the user selects a file, saves the game data to the file.
+     *
+     * @param requestCode The request code passed to startActivityForResult.
+     * @param resultCode  The result code returned by the child activity.
+     * @param data  
+    The intent returned by the child activity.
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -380,9 +456,13 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
-    // Method to save game data to the selected file
+    /**
+     * Saves the game data to a file.
+     *
+     * @param fileUri The URI of the file to save the game data to.
+     */
     private void saveGameToFile(Uri fileUri) {
-        String gameData = Game.getInstance().toString();
+        String gameData = Tournament.getInstance().toString();
 
         try (OutputStream outputStream = getContentResolver().openOutputStream(fileUri);
              BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
@@ -402,12 +482,22 @@ public class GameActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Checks if the current player is a computer player.
+     *
+     * @return true if the current player is a computer player, false otherwise
+     */
     private boolean isComputerPlayer() {
-        return game.getCurrentPlayer() != null && game.getCurrentPlayer().isComputer();
+        return tournament.getCurrentPlayer() != null && tournament.getCurrentPlayer().isComputer();
     }
 
+    /**
+     * Checks if the current player is a human player.
+     *
+     * @return true if the current player is a human player, false otherwise.
+     */
     private boolean isHumanPlayer() {
-        return game.getCurrentPlayer() != null && !game.getCurrentPlayer().isComputer();
+        return tournament.getCurrentPlayer() != null && !tournament.getCurrentPlayer().isComputer();
     }
 
 }

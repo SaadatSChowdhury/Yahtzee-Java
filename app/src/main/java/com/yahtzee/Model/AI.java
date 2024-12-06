@@ -20,21 +20,46 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * The AI class contains the logic for determining the best strategy and providing help
+ * for the AI player in the Yahtzee game.
+ */
 public class AI {
 
+    // Priority categories for the AI to pursue
     static final List<Category> priorityCategories = List.of(YAHTZEE, LARGE_STRAIGHT, SMALL_STRAIGHT, FULL_HOUSE);
+
+    // Categories that require the same kind of dice
     static final List<Category> straightCategories = List.of(LARGE_STRAIGHT, SMALL_STRAIGHT);
+
+    // Categories that require the same kind of dice
     static final List<Category> sameKindCategories = List.of(YAHTZEE, FOUR_OF_A_KIND, THREE_OF_A_KIND);
+
+    // Categories that require any combination of dice
     List<Category> anyCombinationCategories = List.of(SIXES, FIVES, FOURS, THREES, TWOS, ACES);
 
-    public static Help getHelp(Game game) {
-        ScoreCard scoreCard = game.getScoreCard();
-        List<Integer> keptDice = game.getDiceRoll().getKeptDiceValues();
-        List<Integer> rolledDice = game.getDiceRoll().getRolledDiceValues();
+    /**
+     * Provides help to the AI based on the current game state.
+     *
+     * @param tournament The current tournament.
+     * @return The help object containing advice for the AI.
+     */
+    public static Help getHelp(Tournament tournament) {
+        ScoreCard scoreCard = tournament.getScoreCard();
+        List<Integer> keptDice = tournament.getDiceRoll().getKeptDiceValues();
+        List<Integer> rolledDice = tournament.getDiceRoll().getRolledDiceValues();
 
         return getHelp(scoreCard, keptDice, rolledDice);
     }
 
+    /**
+     * Provides help to the AI based on the current game state.
+     *
+     * @param scoreCard  The current score card.
+     * @param keptDice   The dice that the AI has chosen to keep.
+     * @param rolledDice The dice that the AI has rolled.
+     * @return The help object containing advice for the AI.
+     */
     public static Help getHelp(ScoreCard scoreCard, List<Integer> keptDice, List<Integer> rolledDice) {
         List<Integer> diceToKeep = getDiceToKeep(scoreCard, keptDice, rolledDice);
         boolean stand = getStandStatus(scoreCard, keptDice, rolledDice);
@@ -42,6 +67,14 @@ public class AI {
         return new Help(targetCategory, diceToKeep, keptDice, rolledDice, stand);
     }
 
+    /**
+     * Determines the best category for the AI to target based on the current game state.
+     *
+     * @param scoreCard  The current score card.
+     * @param keptDice   The dice that the AI has chosen to keep.
+     * @param diceToKeep The dice that the AI has chosen to keep.
+     * @return The best category for the AI to target.
+     */
     @Nullable
     private static Category getTargetCategory(ScoreCard scoreCard, List<Integer> keptDice, List<Integer> diceToKeep) {
         List<Integer> resultingDice = combineRolls(keptDice, diceToKeep);
@@ -78,7 +111,14 @@ public class AI {
         return targetCategories.get(0);
     }
 
-
+    /**
+     * Determines the dice that the AI should keep based on the current game state.
+     *
+     * @param scoreCard  The current score card.
+     * @param keptDice   The dice that the AI has chosen to keep.
+     * @param diceRolls  The dice that the AI has rolled.
+     * @return The dice that the AI should keep.
+     */
     public static List<Integer> getDiceToKeep(ScoreCard scoreCard, List<Integer> keptDice, List<Integer> diceRolls) {
         if (keptDice.size() == 5) {
             return List.of();
@@ -88,6 +128,14 @@ public class AI {
         return categoryKeepDice.getDiceToKeep();
     }
 
+    /**
+     * Determines which dice to keep for a given category, considering the current scorecard and dice rolls.
+     *
+     * @param scoreCard The current scorecard.
+     * @param keptDice  The dice values the AI has kept.
+     * @param diceRolls The dice values rolled in the current turn.
+     * @return A CategoryKeepDice object containing the category and the dice to keep.
+     */
     private static CategoryKeepDice getCategoryKeepDice(ScoreCard scoreCard, List<Integer> keptDice, List<Integer> diceRolls) {
         List<Category> targetCategories = scoreCard.getAvailableCategories();
         List<Integer> potentialDice = new ArrayList<>(keptDice);
@@ -216,7 +264,14 @@ public class AI {
         return new CategoryKeepDice(targetCategory, largestIntersection);
     }
 
-
+    /**
+     * Determines whether the AI should stand based on the current game state.
+     *
+     * @param scoreCard  The current score card.
+     * @param keptDice   The dice that the AI has chosen to keep.
+     * @param diceRolls  The dice that the AI has rolled.
+     * @return True if the AI should stand, false otherwise.
+     */
     public static boolean getStandStatus(ScoreCard scoreCard, List<Integer> keptDice, List<Integer> diceRolls) {
         List<Integer> diceToKeep = getDiceToKeep(scoreCard, keptDice, diceRolls).stream().sorted().collect(Collectors.toList());
         List<Integer> rolledDice = diceRolls.stream().sorted().collect(Collectors.toList());
@@ -224,7 +279,12 @@ public class AI {
 
     }
 
-
+    /**
+     * Generates all possible combinations of elements.
+     *
+     * @param elements The elements to generate combinations from.
+     * @return A list of all possible combinations.
+     */
     public static List<List<Integer>> getCombinations(List<Integer> elements) {
         List<List<Integer>> result = new ArrayList<>();
         int n = elements.size();
@@ -240,6 +300,13 @@ public class AI {
         return result;
     }
 
+    /**
+     * Returns the intersection of two lists.
+     *
+     * @param list1 The first list.
+     * @param list2 The second list.
+     * @return The intersection of the two lists.
+     */
     private static List<Integer> getIntersection(List<Integer> list1, List<Integer> list2) {
         int[] count1 = new int[6];
         int[] count2 = new int[6];
@@ -263,12 +330,25 @@ public class AI {
         return intersection;
     }
 
+    /**
+     * Combines two lists of dice rolls.
+     *
+     * @param keptDice  The dice that the AI has chosen to keep.
+     * @param diceRolls The dice that the AI has rolled.
+     * @return The combined list of dice rolls.
+     */
     private static List<Integer> combineRolls(List<Integer> keptDice, List<Integer> diceRolls) {
         List<Integer> combinedRolls = new ArrayList<>(keptDice);
         combinedRolls.addAll(diceRolls);
         return combinedRolls;
     }
 
+    /**
+     * Returns the list of dice that are of the maximal kind.
+     *
+     * @param dice The list of dice.
+     * @return The list of dice that are of the maximal kind.
+     */
     private static List<Integer> getOnlyMaximalKind(List<Integer> dice) {
         int[] count = new int[6];
         for (int i : dice) {
@@ -294,19 +374,43 @@ public class AI {
 
 }
 
+/**
+ * The CategoryKeepDice class is used to represent a category and the list of dice
+ * that should be kept for that category in the Yahtzee game.
+ */
 class CategoryKeepDice {
+
+    // The category that the dice are being kept for
     private final Category category;
+
+    // The list of dice that should be kept
     private final List<Integer> diceToKeep;
 
+    /**
+     * Creates a new CategoryKeepDice object.
+     *
+     * @param category   The category that the dice are being kept for.
+     * @param diceToKeep The list of dice that should be kept.
+     */
     public CategoryKeepDice(Category category, List<Integer> diceToKeep) {
         this.category = category;
         this.diceToKeep = diceToKeep;
     }
 
+    /**
+     * Retrieves the category associated with the dice to keep.
+     *
+     * @return The category for which the dice are being kept.
+     */
     public Category getCategory() {
         return category;
     }
 
+    /**
+     * Retrieves the list of dice values that should be kept.
+     *
+     * @return The list of dice values to keep.
+     */
     public List<Integer> getDiceToKeep() {
         return diceToKeep;
     }

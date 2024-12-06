@@ -11,7 +11,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.yahtzee.Model.Game;
+import com.yahtzee.Model.Tournament;
 import com.yahtzee.R;
 
 import java.io.BufferedReader;
@@ -20,6 +20,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Objects;
 
+/**
+ * The main activity for the Yahtzee game.
+ * This activity handles the main menu display and user interactions.
+ */
 public class MainActivity extends AppCompatActivity {
 
     Button newGameButton;
@@ -36,13 +40,14 @@ public class MainActivity extends AppCompatActivity {
         newGameButton = findViewById(R.id.newGameButton);
         loadGameButton = findViewById(R.id.loadGameButton);
 
+        // Set an OnClickListener on the new game button to start a new game
         newGameButton.setOnClickListener(v -> {
-            Game.startNewGame();
+            Tournament.startNewGame();
             Intent intent = new Intent(this, GameActivity.class);
             startActivity(intent);
         });
 
-
+        // Set an OnClickListener on the load game button to open a file picker
         loadGameButton.setOnClickListener(view -> {
 
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -53,6 +58,7 @@ public class MainActivity extends AppCompatActivity {
 
         });
 
+        // Set an OnApplyWindowInsetsListener to handle window insets for edge-to-edge display
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -60,6 +66,15 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Handles the result of the file picker activity.
+     * If the user selects a file, reads the game data from the file and starts a new game with the loaded data.
+     *
+     * @param requestCode The request code passed to startActivityForResult.
+     * @param resultCode  The result code returned by the child activity.
+     * @param  
+    resultData  The intent returned by the child activity.
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent resultData) {
         super.onActivityResult(requestCode, resultCode, resultData);
@@ -85,7 +100,7 @@ public class MainActivity extends AppCompatActivity {
 
             String serialString = stringBuilder.toString();
 
-            Game.setFromString(serialString);
+            Tournament.setFromString(serialString);
 
 
             Intent intent = new Intent(MainActivity.this, GameActivity.class);

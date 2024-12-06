@@ -10,12 +10,15 @@ import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.yahtzee.Model.CardEntry;
-import com.yahtzee.Model.Game;
+import com.yahtzee.Model.Tournament;
 import com.yahtzee.Model.Player;
 import com.yahtzee.R;
 
 import java.util.List;
 
+/**
+ * Activity for displaying the results of the game.
+ */
 public class ResultActivity extends AppCompatActivity {
 
     @Override
@@ -25,8 +28,8 @@ public class ResultActivity extends AppCompatActivity {
         setContentView(R.layout.activity_result);
 
 
-        Game game = Game.getInstance();
-        if (!game.isOver()) {
+        Tournament tournament = Tournament.getInstance();
+        if (!tournament.isOver()) {
             Intent intent = new Intent(this, GameActivity.class);
             startActivity(intent);
         }
@@ -39,16 +42,21 @@ public class ResultActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Initializes the scorecard display.
+     * Removes all existing rows except the header.
+     * Adds a new row for each category in the scorecard.
+     */
     private void initScoreCard() {
-        Game game = Game.getInstance();
+        Tournament tournament = Tournament.getInstance();
 
         TableLayout scoreCardTable = (TableLayout) findViewById(R.id.scoreCardTableResult);
         // Remove all views except the header
         scoreCardTable.removeViews(1, scoreCardTable.getChildCount() - 1);
 
 
-        List<CardEntry> entries = game.getScoreCard().getEntries();
-        for (CardEntry entry : game.getScoreCard().getEntries()) {
+        List<CardEntry> entries = tournament.getScoreCard().getEntries();
+        for (CardEntry entry : tournament.getScoreCard().getEntries()) {
             TableRow row = new TableRow(this);
             TextView category = new TextView(this);
             category.setText(entry.getCategory().toString());
@@ -71,12 +79,20 @@ public class ResultActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Initializes the result text display.
+     * Sets the text of the result text view to the result text of the tournament.
+     */
     private void initResultText() {
-        Game game = Game.getInstance();
+        Tournament tournament = Tournament.getInstance();
         TextView resultText = (TextView) findViewById(R.id.resultText);
-        resultText.setText(game.getResultText());
+        resultText.setText(tournament.getResultText());
     }
 
+    /**
+     * Initializes the main menu button.
+     * Sets an OnClickListener on the main menu button to start the MainActivity.
+     */
     private void initMainMenuButton() {
         findViewById(R.id.mainMenuButton).setOnClickListener(v -> {
             Intent intent = new Intent(this, MainActivity.class);
@@ -84,6 +100,10 @@ public class ResultActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Initializes the log button.
+     * Sets an OnClickListener on the log button to start the LogActivity.
+     */
     private void initLogButton() {
         findViewById(R.id.logButton).setOnClickListener(v -> {
             Intent intent = new Intent(this, LogActivity.class);
